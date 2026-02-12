@@ -1,5 +1,6 @@
 package com.jdbc.jdbc_user.Repository.Impl;
 
+import com.jdbc.jdbc_user.Model.Request.UserRequest;
 import com.jdbc.jdbc_user.Model.UserModel;
 import com.jdbc.jdbc_user.Repository.UserRepository;
 import jakarta.annotation.PostConstruct;
@@ -13,7 +14,6 @@ import org.springframework.jdbc.core.simple.SimpleJdbcCall;
 import org.springframework.stereotype.Repository;
 
 import java.sql.Types;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -28,8 +28,10 @@ public class UserRepositoryImpl implements UserRepository {
     private SimpleJdbcCall delUserById;
 
     @Override
-    public List<UserModel> getAllUsers() {
-        Map<String,Object> out = getAllUsers.execute(new HashMap<String,Object>(0));
+    public List<UserModel> getAllUsers(Integer is_soft) {
+        SqlParameterSource in = new MapSqlParameterSource()
+                .addValue("IS_SOFT",is_soft);
+        Map<String,Object> out = getAllUsers.execute(in);
         List<UserModel> users = (List<UserModel>) out.get("POC_CURSOR");
         return users;
     }
@@ -44,15 +46,13 @@ public class UserRepositoryImpl implements UserRepository {
     }
 
     @Override
-    public UserModel postUserRegister(UserModel user) {
-        System.out.println(user.getUsername());
-        System.out.println(user.getCountry());
+    public UserModel postUserRegister(UserRequest user) {
         SqlParameterSource in = new MapSqlParameterSource()
                 .addValue("POV_USERNAME",user.getUsername())
-                .addValue("POV_PASSWORD",user.getPassword())
-                .addValue("POV_FIRSTNAME",user.getFirstname())
-                .addValue("POV_LASTNAME",user.getLastname())
-                .addValue("POV_COUNTRY",user.getCountry());
+                .addValue("POV_PASSWORD",user.getContrasena())
+                .addValue("POV_FIRSTNAME",user.getAp_materno())
+                .addValue("POV_LASTNAME",user.getAp_materno())
+                .addValue("POV_COUNTRY",user.getPais());
         Map<String,Object> out = postUserRegister.execute(in);
         UserModel register = ((List<UserModel>) out.get("POC_CURSOR")).get(0);
         return register;
@@ -75,6 +75,9 @@ public class UserRepositoryImpl implements UserRepository {
                 .withCatalogName("PKG_JDBC_USER")
                 .withProcedureName("SP_JDBC_USER_ALL")
                 .withoutProcedureColumnMetaDataAccess()
+                .declareParameters(
+                        new SqlParameter("IS_SOFT", Types.INTEGER)
+                )
                 .returningResultSet("POC_CURSOR", BeanPropertyRowMapper.newInstance(UserModel.class));
 
         //One user by id
